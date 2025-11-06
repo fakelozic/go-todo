@@ -1,0 +1,45 @@
+version: "3"
+
+tasks:
+  help:
+    desc: print this help message
+    cmds:
+      - task --list-all
+    silent: true
+
+  confirm:
+    desc: confirmation prompt
+    cmds:
+      - |
+        echo -n 'Are you sure? [y/N] ' && read ans && [ ${ans:-N} = y ]
+    silent: true
+    internal: true
+
+  run:
+    desc: run the cmd/api application
+    cmds:
+      - go run ./cmd/api
+
+  migrations:up:
+    desc: apply all up database migrations
+    deps: [confirm]
+    cmds:
+      - echo 'Running up migrations...'
+      - goose -dir internal/sql/schema postgres "postgres://postgres:4934lx@localhost:5432/go-todo" up
+
+  migrations:down:
+    desc: apply all down database migrations
+    deps: [confirm]
+    cmds:
+      - echo 'Running down migrations...'
+      - goose -dir internal/sql/schema postgres "postgres://postgres:4934lx@localhost:5432/go-todo" down
+
+  tidy:
+    desc: format all .go files, and tidy and vendor module dependencies
+    cmds:
+      - echo 'Formatting .go files...'
+      - go fmt ./...
+      - echo 'Tidying module dependencies...'
+      - go mod tidy
+      - echo 'Verifying dependencies...'
+      - go mod verify

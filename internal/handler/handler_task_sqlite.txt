@@ -1,0 +1,130 @@
+package handler
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
+	"github.com/fakelozic/go-todo/internal/models"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+func (apiCfg *ApiConfig) HandlerCreate(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Task string `json:"task"`
+	}
+	params := parameters{}
+
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&params)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprintf("error parsing JSON: %v", err))
+		return
+	}
+
+	_, err = apiCfg.DB.Exec(
+		`INSERT INTO tasks (id, task, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+		uuid.New(),
+		params.Task,
+		false,
+		time.Now(),
+		time.Now(),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ResponseWithJSON(w, 201, params)
+}
+
+func (apiCfg *ApiConfig) HandlerGetAllTasks(w http.ResponseWriter, r *http.Request) {
+	rows, err := apiCfg.DB.Query(`SELECT id, task, status, created_at, updated_at FROM tasks`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	tasks := []models.Task{}
+	for rows.Next() {
+		var t models.Task
+		err := rows.Scan(&t.ID, &t.Task, &t.Status, &t.CreatedAt, &t.UpdatedAt)
+		if err != nil {
+			log.Fatal(err)
+		}
+		tasks = append(tasks, t)
+	}
+	ResponseWithJSON(w, http.StatusOK, tasks)
+}
+
+func (apiConfig *ApiConfig) HandleUpdateTask(w http.ResponseWriter, r *http.Request) {
+	taskIDStr := chi.URLParam(r, "taskID")
+	taskID, err := uuid.Parse(taskIDStr)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprintf("error paring feed follow id: %v", err))
+		return
+	}
+
+	var t models.Task
+
+	err = apiConfig.DB.QueryRow("SELECT id, status FROM tasks WHERE id = ?", taskID).Scan(&t.ID, &t.Status)
+	if err == sql.ErrNoRows {
+		ResponseWithError(w, 400, fmt.Sprintf("user not found: %v", err))
+		return
+	}
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprint(err.Error()))
+		return
+	}
+
+	_, err = apiConfig.DB.Exec("UPDATE tasks SET status = ? WHERE id = ?", !t.Status, taskID)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprint(err.Error()))
+		return
+	}
+
+	err = apiConfig.DB.QueryRow("SELECT id, task, status, created_at, updated_at FROM tasks WHERE id = ?", taskID).Scan(&t.ID, &t.Task, &t.Status, &t.CreatedAt, &t.UpdatedAt)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprint(err.Error()))
+		return
+	}
+
+	ResponseWithJSON(w, http.StatusAccepted, t)
+}
+
+func (apiConfig *ApiConfig) HandleDeleteTask(w http.ResponseWriter, r *http.Request) {
+	taskIDStr := chi.URLParam(r, "taskID")
+	taskID, err := uuid.Parse(taskIDStr)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprintf("error parsing feed follow id: %v", err))
+		return
+	}
+
+	var t models.Task
+
+	err = apiConfig.DB.QueryRow("SELECT id, status FROM tasks WHERE id = ?", taskID).Scan(&t.ID, &t.Status)
+	if err == sql.ErrNoRows {
+		ResponseWithError(w, 400, fmt.Sprintf("user not found: %v", err))
+		return
+	}
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprint(err.Error()))
+		return
+	}
+
+	result, err := apiConfig.DB.Exec("DELETE FROM tasks WHERE id = ?", taskID)
+	if err != nil {
+		ResponseWithError(w, 400, fmt.Sprint(err.Error()))
+		return
+	}
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		ResponseWithError(w, 400, fmt.Sprintf("weird - zero rows deleted, %d", err))
+	}
+	msg := models.Response{
+		Message: "deleted",
+	}
+	ResponseWithJSON(w, http.StatusAccepted, msg)
+}
