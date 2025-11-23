@@ -1,14 +1,14 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/env/v2"
 	"github.com/knadh/koanf/v2"
-	"github.com/rs/zerolog"
 )
 
 type Config struct {
@@ -26,29 +26,47 @@ type DatabaseConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().Logger()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	k := koanf.New(".")
 
-	err := k.Load(env.Provider("GO_TODO_", ".", func(s string) string {
-		return strings.ToLower(strings.TrimPrefix(s, "GO_TODO_"))
+	err := k.Load(env.Provider(".", env.Opt{
+		Prefix: "GO_TODO_",
+		TransformFunc: func(k, v string) (string, any) {
+			k = strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(k, "GO_TODO_")), "__", ".")
+
+			switch k {
+			case "server.cors_allowed_origins":
+				if strings.Contains(v, ",") {
+					rawSlice := strings.Split(v, ",")
+					var cleanSlice []string
+
+					for _, item := range rawSlice {
+						if trimmed := strings.TrimSpace(item); trimmed != "" {
+							cleanSlice = append(cleanSlice, trimmed)
+						}
+					}
+					return k, cleanSlice
+				}
+			}
+			return k, v
+		},
 	}), nil)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not load initial env variables")
+		logger.Error("could not load initial env variables", "error:", err)
 	}
 
 	mainConfig := &Config{}
 
 	err = k.Unmarshal("", mainConfig)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("could not unmarshal main config")
+		logger.Error("could not unmarshal main config", "error:", err)
 	}
 
 	validate := validator.New()
-
 	err = validate.Struct(mainConfig)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("config validation failed")
+		logger.Error("config validation failed", "error:", err)
 	}
 
 	return mainConfig, nil
