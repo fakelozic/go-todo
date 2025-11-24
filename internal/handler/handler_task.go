@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/fakelozic/go-todo/internal/database"
-	"github.com/fakelozic/go-todo/internal/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -36,7 +35,7 @@ func (apiCfg *ApiConfig) HandlerCreateTasks(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		ResponseWithError(w, 400, fmt.Sprintf("couldn't create task: %v", err))
 	}
-	ResponseWithJSON(w, http.StatusCreated, models.DatabaseTaskToTask(task))
+	ResponseWithJSON(w, http.StatusCreated, task)
 }
 
 func (apiCfg *ApiConfig) HandlerGetAllTasks(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -44,7 +43,7 @@ func (apiCfg *ApiConfig) HandlerGetAllTasks(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		ResponseWithError(w, 400, fmt.Sprintf("couldn't get all task: %v", err))
 	}
-	ResponseWithJSON(w, http.StatusOK, models.DatabaseTasksToTasks(tasks))
+	ResponseWithJSON(w, http.StatusOK, tasks)
 }
 
 func (apiConfig *ApiConfig) HandleUpdateTask(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -89,7 +88,7 @@ func (apiConfig *ApiConfig) HandleUpdateTask(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ResponseWithJSON(w, http.StatusAccepted, models.DatabaseTaskToTask(task))
+	ResponseWithJSON(w, http.StatusAccepted, task)
 }
 
 func (apiConfig *ApiConfig) HandleToggleTask(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -122,7 +121,7 @@ func (apiConfig *ApiConfig) HandleToggleTask(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ResponseWithJSON(w, http.StatusAccepted, models.DatabaseTaskToTask(task))
+	ResponseWithJSON(w, http.StatusAccepted, task)
 }
 
 func (apiConfig *ApiConfig) HandleDeleteTask(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -153,5 +152,5 @@ func (apiConfig *ApiConfig) HandleDeleteTask(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ResponseWithJSON(w, http.StatusAccepted, models.DatabaseTaskToTask(task))
+	ResponseWithJSON(w, http.StatusAccepted, task)
 }

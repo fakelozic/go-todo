@@ -11,18 +11,18 @@ import (
 )
 
 type Task struct {
-	ID        uuid.UUID
-	Task      string
-	Status    bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	UserID    uuid.UUID
+	ID        uuid.UUID `json:"id"`
+	Task      string    `json:"task"`
+	Status    bool      `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 type User struct {
-	ID        uuid.UUID
-	Username  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ApiKey    string
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ApiKey    string    `json:"api_key"`
 }

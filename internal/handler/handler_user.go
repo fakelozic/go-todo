@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/fakelozic/go-todo/internal/database"
-	"github.com/fakelozic/go-todo/internal/models"
 	"github.com/google/uuid"
 )
 
@@ -34,9 +33,9 @@ func (apiCfg *ApiConfig) HandlerCreateUsers(w http.ResponseWriter, r *http.Reque
 		ResponseWithError(w, 400, fmt.Sprintf("couldn't create user: %v", err))
 	}
 
-	ResponseWithJSON(w, http.StatusCreated, models.DatabaseUserToUser(user))
+	ResponseWithJSON(w, http.StatusCreated, user)
 }
 
 func (apiCfg *ApiConfig) HandlerGetUser(w http.ResponseWriter, r *http.Request, user database.User) {
-	ResponseWithJSON(w, http.StatusOK, models.DatabaseUserToUser(user))
+	ResponseWithJSON(w, http.StatusOK, user)
 }

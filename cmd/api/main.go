@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"log"
 	"net/http"
 
@@ -11,7 +11,7 @@ import (
 	"github.com/fakelozic/go-todo/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -19,17 +19,21 @@ func main() {
 	if err != nil {
 		log.Fatal("error loading config", err)
 	}
-	db, err := sql.Open("postgres", cfg.Database.DSN)
+	pgxPoolConfig, err := pgxpool.ParseConfig(cfg.Database.DSN)
 	if err != nil {
-		log.Fatal("error opening database", err)
+		log.Fatalf("failed to parse pgx pool config: %v", err)
 	}
-	defer db.Close()
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), pgxPoolConfig)
+	if err != nil {
+		log.Fatalf("failed to create pgx pool: %v", err)
+	}
+	defer dbPool.Close()
 
 	handlerApi := handler.ApiConfig{
-		DB: database.New(db),
+		DB: database.New(dbPool),
 	}
 	middlewareApi := middleware.ApiConfig{
-		DB: database.New(db),
+		DB: database.New(dbPool),
 	}
 
 	router := chi.NewRouter()

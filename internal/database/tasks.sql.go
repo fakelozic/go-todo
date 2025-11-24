@@ -19,16 +19,16 @@ RETURNING id, task, status, created_at, updated_at, user_id
 `
 
 type CreateTaskParams struct {
-	ID        uuid.UUID
-	Task      string
-	Status    bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	UserID    uuid.UUID
+	ID        uuid.UUID `json:"id"`
+	Task      string    `json:"task"`
+	Status    bool      `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
-	row := q.db.QueryRowContext(ctx, createTask,
+	row := q.db.QueryRow(ctx, createTask,
 		arg.ID,
 		arg.Task,
 		arg.Status,
@@ -55,12 +55,12 @@ RETURNING id, task, status, created_at, updated_at, user_id
 `
 
 type DeleteTaskParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) DeleteTask(ctx context.Context, arg DeleteTaskParams) (Task, error) {
-	row := q.db.QueryRowContext(ctx, deleteTask, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, deleteTask, arg.ID, arg.UserID)
 	var i Task
 	err := row.Scan(
 		&i.ID,
@@ -78,7 +78,7 @@ SELECT id, task, status, created_at, updated_at, user_id FROM tasks WHERE user_i
 `
 
 func (q *Queries) GetAllTasks(ctx context.Context, userID uuid.UUID) ([]Task, error) {
-	rows, err := q.db.QueryContext(ctx, getAllTasks, userID)
+	rows, err := q.db.Query(ctx, getAllTasks, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +98,6 @@ func (q *Queries) GetAllTasks(ctx context.Context, userID uuid.UUID) ([]Task, er
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -113,12 +110,12 @@ WHERE id = $1 AND user_id = $2
 `
 
 type GetTaskByIDParams struct {
-	ID     uuid.UUID
-	UserID uuid.UUID
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) GetTaskByID(ctx context.Context, arg GetTaskByIDParams) (Task, error) {
-	row := q.db.QueryRowContext(ctx, getTaskByID, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getTaskByID, arg.ID, arg.UserID)
 	var i Task
 	err := row.Scan(
 		&i.ID,
@@ -141,14 +138,14 @@ RETURNING id, task, status, created_at, updated_at, user_id
 `
 
 type ToggleTaskParams struct {
-	Status    bool
-	UpdatedAt time.Time
-	ID        uuid.UUID
-	UserID    uuid.UUID
+	Status    bool      `json:"status"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) ToggleTask(ctx context.Context, arg ToggleTaskParams) (Task, error) {
-	row := q.db.QueryRowContext(ctx, toggleTask,
+	row := q.db.QueryRow(ctx, toggleTask,
 		arg.Status,
 		arg.UpdatedAt,
 		arg.ID,
@@ -176,14 +173,14 @@ RETURNING id, task, status, created_at, updated_at, user_id
 `
 
 type UpdateTaskParams struct {
-	Task      string
-	UpdatedAt time.Time
-	ID        uuid.UUID
-	UserID    uuid.UUID
+	Task      string    `json:"task"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
-	row := q.db.QueryRowContext(ctx, updateTask,
+	row := q.db.QueryRow(ctx, updateTask,
 		arg.Task,
 		arg.UpdatedAt,
 		arg.ID,
