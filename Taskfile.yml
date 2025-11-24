@@ -25,7 +25,7 @@ tasks:
     deps: [confirm]
     cmds:
       - echo 'Running up migrations...'
-      - goose -dir internal/sql/schema postgres "postgres://postgres:4934lx@localhost:5432/go-todo" up
+      - goose -dir internal/sql/schema postgres "postgresql://neondb_owner:npg_mqfPnRTs80La@ep-muddy-feather-a1l6tfz8-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" up
 
   migrations:down:
     desc: apply all down database migrations
